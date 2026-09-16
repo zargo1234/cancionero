@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancionero Elyon</title>
+
+  <!-- PWA: permite instalar la app en la pantalla de inicio -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f59e0b">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Elyon">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media (orientation: landscape) {
+      .header-compact { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+      .title-compact { font-size: 1.125rem; }
+      .main-container { max-width: 95% !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Encabezado Superior -->
+  <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-20 shadow-lg header-compact">
+    <div class="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 main-container">
+      <div>
+        <h1 class="text-xl font-bold text-amber-400 flex items-center gap-2 title-compact">
+          🎼 Cancionero Elyon
+        </h1>
+        <p class="text-xs text-slate-400">Visor de Partituras Corales</p>
+      </div>
+
+      <!-- Barra Acceso Admin Directa -->
+      <div id="bloque-login" class="flex items-center gap-2">
+        <input type="password" id="input-clave" placeholder="Clave Admin" 
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go"
+               class="p-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-slate-100 focus:outline-none focus:border-amber-400 w-28 text-center">
+        <button id="btn-ingresar" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded text-xs transition">
+          Ingresar
+        </button>
+      </div>
+
+      <div id="bloque-admin-activo" class="hidden flex items-center gap-2">
+        <span class="text-xs text-amber-400 font-bold">🔓 Admin Activo</span>
+        <button id="btn-salir" class="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 rounded text-xs hover:bg-red-500/30">
+          Salir
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-xl mx-auto w-full p-4 flex-1 flex flex-col gap-4 main-container">
+
+    <!-- Seccion Admin: Formulario de Carga Directa -->
+    <section id="panel-admin" class="hidden bg-slate-800 p-4 rounded-xl border-2 border-amber-500/50 shadow-xl space-y-3">
+      <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-700 pb-2">
+        ⚡ Cargar Canción desde el Celular
+      </h2>
+      
+      <!-- Token de GitHub -->
+      <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-700 space-y-1">
+        <label class="text-[11px] text-amber-300 font-semibold block">GitHub Token (Obligatorio para subir archivos):</label>
+        <input type="password" id="github-token" placeholder="Pega aquí tu token ghp_..." 
+               class="w-full p-1.5 bg-slate-950 border border-slate-700 rounded text-xs text-slate-200 focus:outline-none focus:border-amber-400">
+      </div>
+
+      <form id="form-cancion" class="space-y-3">
+        <div>
+          <label class="text-xs text-slate-300 font-medium block mb-1">Título de la canción:</label>
+          <input type="text" id="titulo" placeholder="Ej. Dios me sostendrá" required 
+                 class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-amber-400">
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-300 font-medium block mb-1">Seleccionar archivo PDF del dispositivo:</label>
+          <input type="file" id="archivo-pdf" accept="application/pdf" required 
+                 class="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600">
+        </div>
+
+        <!-- Enlaces de Voces de Práctica (Opcionales) -->
+        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700 space-y-2">
+          <label class="text-xs text-amber-400 font-semibold block">Enlaces de YouTube por Voz (Opcional):</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <input type="url" id="yt-soprano" placeholder="Soprano (URL YouTube)" class="p-2 bg-slate-900 border border-slate-700 rounded text-slate-100 focus:outline-none focus:border-amber-400">
+            <input type="url" id="yt-contralto" placeholder="Contralto (URL YouTube)" class="p-2 bg-slate-900 border border-slate-700 rounded text-slate-100 focus:outline-none focus:border-amber-400">
+            <input type="url" id="yt-tenor" placeholder="Tenor (URL YouTube)" class="p-2 bg-slate-900 border border-slate-700 rounded text-slate-100 focus:outline-none focus:border-amber-400">
+            <input type="url" id="yt-bajo" placeholder="Bajo (URL YouTube)" class="p-2 bg-slate-900 border border-slate-700 rounded text-slate-100 focus:outline-none focus:border-amber-400">
+          </div>
+        </div>
+
+        <button type="submit" id="btn-subir-cancion" 
+                class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2">
+          <span>📤 Subir PDF y Guardar Canción</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- Búsqueda y Filtros -->
+    <div class="space-y-2">
+      <input type="text" id="buscador" placeholder="🔍 Buscar por título..." 
+             class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 text-sm focus:outline-none focus:border-amber-400">
+
+      <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+        <span id="contador-canciones">0 canciones disponibles</span>
+        <div class="flex items-center gap-1">
+          <span>Orden:</span>
+          <select id="orden-select" class="bg-slate-800 text-amber-400 border border-slate-700 rounded px-2 py-1 text-xs focus:outline-none">
+            <option value="az">A - Z (Alfabético)</option>
+            <option value="za">Z - A (Inverso)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Canciones -->
+    <section id="lista-canciones" class="space-y-2 flex-1">
+      <p class="text-center text-slate-500 my-8 text-sm">Cargando cancionero...</p>
+    </section>
+
+  </main>
+
+  <!-- Modal Visor Dual PDF + Selector de Voces YouTube -->
+  <div id="modal-pdf" class="fixed inset-0 bg-slate-950/95 z-50 hidden flex-col">
+    <div class="bg-slate-800 p-3 border-b border-slate-700 flex items-center justify-between shadow-lg">
+      <h3 id="modal-pdf-titulo" class="font-bold text-amber-400 text-sm sm:text-base truncate max-w-[50%]">Partitura</h3>
+      <div class="flex items-center gap-2">
+        <a id="btn-descargar-pdf" href="#" target="_blank" download class="bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 font-semibold px-2.5 py-1.5 rounded-lg text-xs transition">
+          📥 Descargar PDF
+        </a>
+        <button onclick="window.cerrarVisorPdf()" 
+                class="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition">
+          ✖ Cerrar
+        </button>
+      </div>
+    </div>
+    
+    <div class="flex-1 w-full h-full bg-slate-900 flex flex-col overflow-hidden">
+      <!-- Visor PDF Universal Multi-Dispositivo -->
+      <div id="contenedor-pdf" class="flex-1 w-full h-full">
+        <iframe id="iframe-pdf" class="w-full h-full border-0" src="about:blank"></iframe>
+      </div>
+
+      <!-- Visor YouTube con Selector de Cuerdas/Voces (Abajo) -->
+      <div id="contenedor-yt" class="hidden bg-slate-950 border-t-2 border-amber-500/40 flex-col">
+        <!-- Pestañas de Voces -->
+        <div id="pestanas-voces" class="flex items-center gap-1 p-2 bg-slate-900 overflow-x-auto no-scrollbar border-b border-slate-800">
+          <span class="text-[11px] text-slate-400 font-bold mr-1">🎙️ Voz:</span>
+        </div>
+        
+        <!-- Reproductor de YouTube Corregido Sin Error 153 -->
+        <div class="h-48 sm:h-60 w-full bg-black">
+          <iframe id="iframe-yt" class="w-full h-full border-0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                  allowfullscreen src="about:blank"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Editar Título y Voces -->
+  <div id="modal-editar" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl max-w-md w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-base font-bold text-amber-400 flex items-center gap-2">✏️ Editar Canción y Voces</h3>
+      <input type="hidden" id="edit-doc-id">
+      <div>
+        <label class="text-xs text-slate-300 block mb-1">Nombre / Título:</label>
+        <input type="text" id="edit-titulo-input" 
+               class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-amber-400">
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <label class="text-xs text-amber-400 font-semibold block">Videos de Ensayo por Voz (YouTube):</label>
+        <input type="url" id="edit-yt-soprano" placeholder="URL Soprano" class="w-full p-2 bg-slate-900 border border-slate-700 rounded text-xs text-slate-100">
+        <input type="url" id="edit-yt-contralto" placeholder="URL Contralto" class="w-full p-2 bg-slate-900 border border-slate-700 rounded text-xs text-slate-100">
+        <input type="url" id="edit-yt-tenor" placeholder="URL Tenor" class="w-full p-2 bg-slate-900 border border-slate-700 rounded text-xs text-slate-100">
+        <input type="url" id="edit-yt-bajo" placeholder="URL Bajo" class="w-full p-2 bg-slate-900 border border-slate-700 rounded text-xs text-slate-100">
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-700">
+        <button onclick="window.cerrarModalEditar()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-lg text-xs transition">
+          Cancelar
+        </button>
+        <button id="btn-guardar-edicion" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs transition">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJXz7alVfAxwPEpPTRt7Q1N46JK0S24eM",
+      authDomain: "cancionero-elyon-d6bcf.firebaseapp.com",
+      projectId: "cancionero-elyon-d6bcf",
+      storageBucket: "cancionero-elyon-d6bcf.firebasestorage.app",
+      messagingSenderId: "197538475797",
+      appId: "1:197538475797:web:67d34e3eb2cc098ad6431c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const cancionesRef = collection(db, "Canciones");
+
+    const CLAVE_ADMIN = "elyon2026";
+    const GITHUB_REPO = "zargo1234/cancionero";
+
+    let cancionesData = [];
+    let esAdmin = false;
+
+    const tokenGuardado = localStorage.getItem("github_pat");
+    if (tokenGuardado) document.getElementById("github-token").value = tokenGuardado;
+
+    // Login Admin
+    function intentarLogin() {
+      const pass = document.getElementById("input-clave").value.trim();
+      if (pass === CLAVE_ADMIN) {
+        esAdmin = true;
+        document.getElementById("bloque-login").classList.add("hidden");
+        document.getElementById("bloque-admin-activo").classList.remove("hidden");
+        document.getElementById("panel-admin").classList.remove("hidden");
+        document.getElementById("input-clave").value = "";
+        renderCanciones();
+      } else {
+        alert("Clave incorrecta");
+      }
+    }
+    document.getElementById("btn-ingresar").addEventListener("click", intentarLogin);
+    document.getElementById("input-clave").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") intentarLogin();
+    });
+
+    // Salir Admin
+    document.getElementById("btn-salir").addEventListener("click", () => {
+      esAdmin = false;
+      document.getElementById("bloque-login").classList.remove("hidden");
+      document.getElementById("bloque-admin-activo").classList.add("hidden");
+      document.getElementById("panel-admin").classList.add("hidden");
+      renderCanciones();
+    });
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = error => reject(error);
+    });
+
+    // Cargar Canción
+    document.getElementById("form-cancion").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const titulo = document.getElementById("titulo").value.trim();
+      const fileInput = document.getElementById("archivo-pdf");
+      const token = document.getElementById("github-token").value.trim();
+      const btnSubir = document.getElementById("btn-subir-cancion");
+
+      const voces = {
+        soprano: document.getElementById("yt-soprano").value.trim(),
+        contralto: document.getElementById("yt-contralto").value.trim(),
+        tenor: document.getElementById("yt-tenor").value.trim(),
+        bajo: document.getElementById("yt-bajo").value.trim()
+      };
+
+      if (!token) {
+        alert("Por favor ingresa tu GitHub Token para subir el archivo.");
+        return;
+      }
+
+      if (fileInput.files.length === 0) {
+        alert("Por favor selecciona un archivo PDF.");
+        return;
+      }
+
+      localStorage.setItem("github_pat", token);
+      const file = fileInput.files[0];
+      const fileNameClean = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const githubPath = `pdfs/${Date.now()}_${fileNameClean}`;
+
+      btnSubir.disabled = true;
+      btnSubir.innerText = "⏳ Subiendo PDF a GitHub...";
+
+      try {
+        const contentBase64 = await toBase64(file);
+
+        const ghResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${githubPath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `Subir partitura: ${titulo}`,
+            content: contentBase64
+          })
+        });
+
+        if (!ghResponse.ok) {
+          const errData = await ghResponse.json();
+          throw new Error(errData.message || "Error al subir archivo a GitHub");
+        }
+
+        const pdfurl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${githubPath}`;
+
+        await addDoc(cancionesRef, { Nombre: titulo, pdfurl, voces, fecha: serverTimestamp() });
+
+        document.getElementById("form-cancion").reset();
+        alert("¡Canción registrada con éxito!");
+      } catch (err) {
+        alert("Error en el proceso: " + err.message);
+      } finally {
+        btnSubir.disabled = false;
+        btnSubir.innerHTML = "<span>📤 Subir PDF y Guardar Canción</span>";
+      }
+    });
+
+    // Leer Firestore compatible con Móviles
+    onSnapshot(cancionesRef, (snapshot) => {
+      cancionesData = [];
+      snapshot.forEach((docSnap) => {
+        cancionesData.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      renderCanciones();
+    }, (error) => {
+      console.error("Error al cargar la base de datos:", error);
+      document.getElementById("lista-canciones").innerHTML = `<p class="text-center text-red-400 my-8 text-sm">Error de conexión con la base de datos (${error.code || "desconocido"}): ${error.message || ""}</p>`;
+    });
+
+    // Normalizar URLs de GitHub
+    function obtenerUrlPdfDirecto(urlOriginal) {
+      if (!urlOriginal) return "#";
+      if (urlOriginal.includes("github.com") && urlOriginal.includes("/blob/")) {
+        return urlOriginal.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/");
+      }
+      return urlOriginal;
+    }
+
+    // Convertidor estricto de YouTube para evitar Error 153
+    function obtenerEmbedYoutube(url) {
+      if (!url) return null;
+      let videoId = null;
+
+      try {
+        if (url.includes("v=")) {
+          videoId = url.split("v=")[1].split("&")[0];
+        } else if (url.includes("youtu.be/")) {
+          videoId = url.split("youtu.be/")[1].split("?")[0];
+        } else if (url.includes("embed/")) {
+          videoId = url.split("embed/")[1].split("?")[0];
+        }
+      } catch (e) {
+        return null;
+      }
+
+      if (!videoId) return null;
+      return `https://www.youtube.com/embed/${videoId}?rel=0&enablejsapi=1`;
+    }
+
+    // Renderizado en Pantalla
+    function renderCanciones() {
+      const buscador = document.getElementById("buscador").value.toLowerCase();
+      const orden = document.getElementById("orden-select").value;
+      const listaContainer = document.getElementById("lista-canciones");
+      const contador = document.getElementById("contador-canciones");
+
+      let filtradas = cancionesData.filter(c => {
+        const titulo = (c.Nombre || c.titulo || "").toLowerCase();
+        return titulo.includes(buscador);
+      });
+
+      filtradas.sort((a, b) => {
+        const titA = (a.Nombre || a.titulo || "").toLowerCase();
+        const titB = (b.Nombre || b.titulo || "").toLowerCase();
+        if (orden === "az") return titA.localeCompare(titB);
+        if (orden === "za") return titB.localeCompare(titA);
+        return 0;
+      });
+
+      contador.textContent = `${filtradas.length} canción(es)`;
+
+      if (filtradas.length === 0) {
+        listaContainer.innerHTML = `<p class="text-center text-slate-500 my-8 text-sm">No se encontraron canciones.</p>`;
+        return;
+      }
+
+      listaContainer.innerHTML = filtradas.map(c => {
+        const titulo = c.Nombre || c.titulo || "Sin título";
+        const urlOriginal = c.pdfurl || c.pdfUrl || "#";
+        const urlDirecta = obtenerUrlPdfDirecto(urlOriginal);
+        
+        const v = c.voces || {};
+        const tieneVoces = v.soprano || v.contralto || v.tenor || v.bajo || c.youtubeUrl;
+
+        return `
+          <div class="bg-slate-800 border border-slate-700/80 p-3.5 rounded-xl flex items-center justify-between gap-3 shadow-sm hover:border-slate-600 transition">
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-slate-100 text-base truncate">${titulo}</h3>
+              <div class="flex items-center gap-3 mt-1">
+                <button onclick="window.abrirVisorPdf('${urlDirecta}', '${titulo.replace(/'/g, "\\'")}', '${c.id}')" 
+                        class="text-amber-400 text-xs font-semibold hover:underline inline-flex items-center gap-1">
+                  📄 Ver Partitura
+                </button>
+                ${tieneVoces ? '<span class="text-xs text-emerald-400 font-medium">🎵 Con Audios</span>' : ''}
+              </div>
+            </div>
+            ${esAdmin ? `
+              <div class="flex items-center gap-1">
+                <button data-id="${c.id}" class="btn-editar bg-amber-500/10 text-amber-400 p-2 rounded-lg text-xs hover:bg-amber-500/20 border border-amber-500/20 transition">
+                  ✏️
+                </button>
+                <button data-id="${c.id}" class="btn-borrar bg-red-500/10 text-red-400 p-2 rounded-lg text-xs hover:bg-red-500/20 border border-red-500/20 transition">
+                  🗑️
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join("");
+
+      if (esAdmin) {
+        document.querySelectorAll('.btn-borrar').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            if (confirm("¿Borrar esta canción definitivamente?")) {
+              await deleteDoc(doc(db, "Canciones", id));
+            }
+          });
+        });
+
+        document.querySelectorAll('.btn-editar').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const item = cancionesData.find(x => x.id === id);
+            if (!item) return;
+
+            document.getElementById("edit-doc-id").value = id;
+            document.getElementById("edit-titulo-input").value = item.Nombre || item.titulo || "";
+            
+            const v = item.voces || {};
+            document.getElementById("edit-yt-soprano").value = v.soprano || item.youtubeUrl || "";
+            document.getElementById("edit-yt-contralto").value = v.contralto || "";
+            document.getElementById("edit-yt-tenor").value = v.tenor || "";
+            document.getElementById("edit-yt-bajo").value = v.bajo || "";
+            
+            const modalEdit = document.getElementById("modal-editar");
+            modalEdit.classList.remove("hidden");
+            modalEdit.classList.add("flex");
+          });
+        });
+      }
+    }
+
+    // Guardar Edición
+    document.getElementById("btn-guardar-edicion").addEventListener("click", async () => {
+      const id = document.getElementById("edit-doc-id").value;
+      const nuevoTitulo = document.getElementById("edit-titulo-input").value.trim();
+
+      const voces = {
+        soprano: document.getElementById("edit-yt-soprano").value.trim(),
+        contralto: document.getElementById("edit-yt-contralto").value.trim(),
+        tenor: document.getElementById("edit-yt-tenor").value.trim(),
+        bajo: document.getElementById("edit-yt-bajo").value.trim()
+      };
+
+      if (!nuevoTitulo) {
+        alert("El título no puede estar vacío.");
+        return;
+      }
+
+      try {
+        await updateDoc(doc(db, "Canciones", id), {
+          Nombre: nuevoTitulo,
+          voces: voces
+        });
+        window.cerrarModalEditar();
+      } catch (err) {
+        alert("Error al actualizar: " + err.message);
+      }
+    });
+
+    window.cerrarModalEditar = () => {
+      const modalEdit = document.getElementById("modal-editar");
+      modalEdit.classList.add("hidden");
+      modalEdit.classList.remove("flex");
+    };
+
+    // Visor Universal PDF (PC y Móviles) + YouTube Corrección Error 153
+    window.abrirVisorPdf = (urlPdf, titulo, id) => {
+      document.getElementById("modal-pdf-titulo").textContent = titulo;
+      
+      // Visor Google Docs / Universal PDF para compatibilidad 100% en Android/iOS y PC sin descarga forzada
+      const pdfViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(urlPdf)}&embedded=true`;
+      document.getElementById("iframe-pdf").src = pdfViewerUrl;
+      document.getElementById("btn-descargar-pdf").href = urlPdf;
+      
+      const item = cancionesData.find(x => x.id === id);
+      const contenedorYt = document.getElementById("contenedor-yt");
+      const pestanasContainer = document.getElementById("pestanas-voces");
+      const iframeYt = document.getElementById("iframe-yt");
+
+      const v = (item && item.voces) ? item.voces : { soprano: item?.youtubeUrl || "" };
+      const listaVoces = [
+        { nombre: "Soprano", url: v.soprano },
+        { nombre: "Contralto", url: v.contralto },
+        { nombre: "Tenor", url: v.tenor },
+        { nombre: "Bajo", url: v.bajo }
+      ].filter(x => x.url && x.url.trim() !== "");
+
+      if (listaVoces.length > 0) {
+        contenedorYt.classList.remove("hidden");
+        contenedorYt.classList.add("flex");
+
+        pestanasContainer.innerHTML = `<span class="text-[11px] text-slate-400 font-bold mr-1">🎙️ Voz:</span>` +
+          listaVoces.map((voz, index) => `
+            <button onclick="window.cambiarVozAudio('${obtenerEmbedYoutube(voz.url)}', this)" 
+                    class="btn-voz-tab ${index === 0 ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300'} text-xs px-2.5 py-1 rounded-md transition border border-slate-700">
+              ${voz.nombre}
+            </button>
+          `).join("");
+
+        iframeYt.src = obtenerEmbedYoutube(listaVoces[0].url);
+      } else {
+        iframeYt.src = "about:blank";
+        contenedorYt.classList.add("hidden");
+        contenedorYt.classList.remove("flex");
+      }
+
+      document.getElementById("modal-pdf").classList.remove("hidden");
+      document.getElementById("modal-pdf").classList.add("flex");
+    };
+
+    window.cambiarVozAudio = (embedUrl, btn) => {
+      document.getElementById("iframe-yt").src = embedUrl;
+      document.querySelectorAll('.btn-voz-tab').forEach(b => {
+        b.className = "btn-voz-tab bg-slate-800 text-slate-300 text-xs px-2.5 py-1 rounded-md transition border border-slate-700";
+      });
+      btn.className = "btn-voz-tab bg-amber-500 text-slate-950 font-bold text-xs px-2.5 py-1 rounded-md transition border border-slate-700";
+    };
+
+    window.cerrarVisorPdf = () => {
+      document.getElementById("iframe-pdf").src = "about:blank";
+      document.getElementById("iframe-yt").src = "about:blank";
+      document.getElementById("modal-pdf").classList.add("hidden");
+      document.getElementById("modal-pdf").classList.remove("flex");
+    };
+
+    document.getElementById("buscador").addEventListener("input", renderCanciones);
+    document.getElementById("orden-select").addEventListener("change", renderCanciones);
+
+    // Registrar Service Worker (necesario para que Chrome ofrezca "Instalar app")
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch((err) => {
+          console.warn("No se pudo registrar el Service Worker:", err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
